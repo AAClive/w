@@ -9,17 +9,15 @@ import lxml
 import datetime
 import lxml
 import threading
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.common.by import By
-from selenium import webdriver
 import numpy as np
 import pandas_datareader as web
 import datetime as dt
-from selenium.webdriver.chrome.options import Options as ChromeOptions
 from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras.layers import Dense,Dropout,LSTM
 from tensorflow.keras.models import Sequential
 from lxml import etree
+import pandas as pd
+
 from email.message import EmailMessage
 import asyncio
 from urllib.request import Request, urlopen
@@ -30,10 +28,6 @@ from bs4 import BeautifulSoup as bs
 import lxml
 from datetime import datetime
 import socket
-from selenium.webdriver.chrome.service import Service
-from selenium import webdriver
-server=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-server.bind(("192.168.15.180",5050))
 future_day=2
 gettingdaysforpred=requests.get('https://www.calendardate.com/todays.htm').text
 gettingdaysforpred=BeautifulSoup(gettingdaysforpred,'lxml')
@@ -48,9 +42,6 @@ csubject="CRYPTO STOCK INFO (Cardano)"
 myemail="cryptobot693@gmail.com"
 recvemail="clivethompson09@gmail.com"
 password="CLIVE10GWEN"
-chrome_options=ChromeOptions()
-PATH="C:/Users/clive/Downloads/chromedriver.exe"
-driver=webdriver.Chrome()
 #def tag_visible(element):
 import threading
 #     if element.parent.name in [
@@ -127,17 +118,8 @@ import threading
 #             crawl(link)
 #         except:
 #             print("excepted the problem")
-def starts():
-    server.listen()
-    while True:
-        conn, addr=server.accept()
-        print("done")
-        global recvmail
-        recvmail=conn.recv(64)
-        recvmail=recvmail.decode()
-threading.Thread(target=starts).start()
-driver.get("https://www.coingecko.com")
-tr=driver.page_source
+
+tr=requests.get("https://www.coingecko.com").text
 print(tr)
 import lxml
 tr=BeautifulSoup(tr,"lxml")
@@ -169,8 +151,15 @@ def price_pred(crypto_name,crypto_currnecy,*args):
         try:
             data=web.DataReader(f'{crypto_currnecy}-{against_currency}',data_source='yahoo')
         except:
-            data=web.DataReader(f'{crypto_currnecy}-USD',data_source='yahoo')
-            ne=True
+            try:
+                data=web.DataReader(f'{crypto_currnecy}-USD',data_source='yahoo')
+                ne=True
+            except:
+                try:
+                    data=web.DataReader(f'{crypto_currnecy}-USD',"yahoo")
+                    nes=True
+                except:
+                  pass
         for line in args:      
             scaler=MinMaxScaler(feature_range=(0,1))
             scaled_data=scaler.fit_transform(data['Close'].values.reshape(-1,1))
@@ -192,6 +181,8 @@ def price_pred(crypto_name,crypto_currnecy,*args):
             model.fit(x_train,y_train,epochs=50,batch_size=32)
             if ne:
                 test_data=web.DataReader(f'{crypto_currnecy}-USD',data_source='yahoo')
+            elif nes:
+                test_data=web.DataReader(f'{crypto_currnecy}-USD','yahoo')
             else:
                 test_data=web.DataReader(f'{crypto_currnecy}-{against_currency}',data_source='yahoo')
             actual_prices=test_data['Close'].values
@@ -244,7 +235,7 @@ def price_pred(crypto_name,crypto_currnecy,*args):
             if line==args[::-1][0]:
                 global cbody
                 Ys=crypt_name+"cbody"
-                x=f'{Ys}="{cryptss_name} price: {cres[0].text} {cplusres} (24h)"'
+                x=f'{Ys}="{cryptss_name} price: {cres[0].text}(24h)"'
                 exec(x)
                 for lines in range(len(predictionlist)):
                     x=f'{Ys}={crypt_name}_cbody+f"{arg[lines]} days (predicted) price:  {predictionlist[lines]}\n'
